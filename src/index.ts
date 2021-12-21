@@ -139,13 +139,7 @@ client.on('messageCreate', async (msg) => {
 \t*SHA-1*: \t\`${status.sha1}\`
 \t*MD5*: \t\`${status.md5}\`
 
-**Scan Results**
-\t✅\t ${status.results.harmless} scanners marked the file as **Harmless** or were unable to detect any malware.
-\t❔\t ${status.results.suspicious} scanners marked the file as **Suspicious**.
-\t❌\t ${status.results.malicious} scanners marked the file as **Malicious**.
-
-
-https://www.virustotal.com/gui/file/${status.md5}
+**Find Scan Results at https://www.virustotal.com/gui/file/${status.md5}**
 
 **Download this file at your own risk, Do not run arbitrary code on your computer unless you fully understand it**
 					`);

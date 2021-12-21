@@ -26,7 +26,7 @@ export default (id: string, msg: Message<boolean>, a: MessageAttachment) => {
 
 	return new Promise<STATUS>(async (resolve, rej) => {
 		let mess = await msg.reply('Analyzing...');
-		const instance = nvt.makeAPI(60000);
+		const instance = nvt.makeAPI();
 		instance.setKey(process.env.VIRUSTOTAL || '');
 
 		instance.fileLookup(id, (err: any, res: any) => {

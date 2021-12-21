@@ -3,9 +3,9 @@
 import {
 	Client,
 	Intents,
-	Message,
+	// Message,
 	MessageAttachment,
-	MessageFlags,
+	// MessageFlags,
 } from 'discord.js';
 import { config } from 'dotenv';
 
@@ -36,19 +36,19 @@ const SUS_TYPES = [
 	'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ];
 
-const SUS_EXTENSIONS = [
-	'.exe',
-	'.app',
-	'.jar',
-	'.bat',
-	'.vbs',
-	'.command',
-	'.cmd',
-	'.xlsx',
-	'.docx',
-	'.pptx',
-	'.ppsx',
-];
+// const SUS_EXTENSIONS = [
+// 	'.exe',
+// 	'.app',
+// 	'.jar',
+// 	'.bat',
+// 	'.vbs',
+// 	'.command',
+// 	'.cmd',
+// 	'.xlsx',
+// 	'.docx',
+// 	'.pptx',
+// 	'.ppsx',
+// ];
 
 console.clear();
 config();
@@ -97,11 +97,6 @@ client.on('messageCreate', async (msg) => {
 			if (SUS_TYPES.includes(a.contentType!)) {
 				is_sus = true;
 			}
-			SUS_EXTENSIONS.forEach((a) => {
-				if ((a.name || '').includes(a)) {
-					is_sus = true;
-				}
-			});
 		});
 
 		if (!is_sus) {

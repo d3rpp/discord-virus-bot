@@ -64,19 +64,19 @@ var SUS_TYPES = [
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ];
-var SUS_EXTENSIONS = [
-    '.exe',
-    '.app',
-    '.jar',
-    '.bat',
-    '.vbs',
-    '.command',
-    '.cmd',
-    '.xlsx',
-    '.docx',
-    '.pptx',
-    '.ppsx',
-];
+// const SUS_EXTENSIONS = [
+// 	'.exe',
+// 	'.app',
+// 	'.jar',
+// 	'.bat',
+// 	'.vbs',
+// 	'.command',
+// 	'.cmd',
+// 	'.xlsx',
+// 	'.docx',
+// 	'.pptx',
+// 	'.ppsx',
+// ];
 console.clear();
 (0, dotenv_1.config)();
 // check if it has the required keys
@@ -120,11 +120,6 @@ client.on('messageCreate', function (msg) { return __awaiter(void 0, void 0, voi
                 if (SUS_TYPES.includes(a.contentType)) {
                     is_sus_1 = true;
                 }
-                SUS_EXTENSIONS.forEach(function (a) {
-                    if ((a.name || '').includes(a)) {
-                        is_sus_1 = true;
-                    }
-                });
             });
             if (!is_sus_1) {
                 msg.react('✅');

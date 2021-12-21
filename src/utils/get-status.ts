@@ -65,11 +65,11 @@ export default (id: string, msg: Message<boolean>, a: MessageAttachment) => {
 
 				let bruh: STATUS = {
 					results: {
-						harmless: r.safe,
+						harmless: n.safe,
 
-						suspicious: r.sus,
+						suspicious: n.sus,
 
-						malicious: r.mal,
+						malicious: n.mal,
 					},
 
 					name: a.name || 'unknown',

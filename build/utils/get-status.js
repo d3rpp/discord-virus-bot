@@ -85,9 +85,9 @@ exports.default = (function (id, msg, a) {
                             // console.log({ r });
                             var bruh = {
                                 results: {
-                                    harmless: r_1.safe,
-                                    suspicious: r_1.sus,
-                                    malicious: r_1.mal,
+                                    harmless: n_1.safe,
+                                    suspicious: n_1.sus,
+                                    malicious: n_1.mal,
                                 },
                                 name: a.name || 'unknown',
                                 type: a.contentType || 'application/octet-stream',

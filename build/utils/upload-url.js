@@ -40,44 +40,43 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 // @ts-ignore
-var node_fetch_1 = __importDefault(require("node-fetch"));
-var form_data_1 = __importDefault(require("form-data"));
 var download_1 = __importDefault(require("download"));
-exports.default = (function (url) {
-    return new Promise(function (res, rej) { return __awaiter(void 0, void 0, void 0, function () {
-        var data, _a, _b, _c, options;
-        return __generator(this, function (_d) {
-            switch (_d.label) {
-                case 0:
-                    data = new form_data_1.default();
-                    _b = (_a = data).append;
-                    _c = ['file'];
-                    return [4 /*yield*/, (0, download_1.default)(url, {
-                            headers: { Accept: '*/*' },
-                            method: 'GET',
-                        })];
+var fs_1 = require("fs");
+// @ts-ignore
+var node_virustotal_1 = __importDefault(require("node-virustotal"));
+exports.default = (function (url, name, mime, message) {
+    return new Promise(function (resolve, rej) { return __awaiter(void 0, void 0, void 0, function () {
+        var mess, instance;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, message.reply("That's a sussy file type, imma check that")];
                 case 1:
-                    _b.apply(_a, _c.concat([(_d.sent()).toString('binary')]));
-                    options = {
-                        method: 'POST',
-                        headers: {
-                            Accept: 'application/json',
-                            'x-apikey': 'b2d1acfb8a44bef6ee2285df3725e9da6c38f45bde551342446793fb60709dc1',
-                            'Content-Type': 'multipart/form-data; boundary=---011000010111000001101001',
-                        },
-                    };
-                    // @ts-ignore
-                    options.body = data;
-                    (0, node_fetch_1.default)('https://www.virustotal.com/api/v3/files', options)
-                        .then(function (j) { return j.json(); })
-                        .then(function (re) {
-                        console.log(re);
-                        if (re.error) {
-                            rej();
-                            return;
-                        }
-                        res(re.data.id);
-                    });
+                    mess = _a.sent();
+                    return [4 /*yield*/, (0, download_1.default)(url, "".concat(__dirname, "/tmp"))];
+                case 2:
+                    _a.sent();
+                    instance = node_virustotal_1.default.makeAPI();
+                    instance.setKey(process.env.VIRUSTOTAL || '');
+                    instance.uploadFile((0, fs_1.readFileSync)("".concat(__dirname, "/tmp/").concat(name)), name, mime, function (err, res) { return __awaiter(void 0, void 0, void 0, function () {
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    if (err) {
+                                        console.error(err);
+                                        rej();
+                                    }
+                                    if (res) {
+                                        console.info(res);
+                                        resolve(atob(JSON.parse(res).data.id).split(':')[0]);
+                                    }
+                                    return [4 /*yield*/, mess.delete()];
+                                case 1:
+                                    _a.sent();
+                                    (0, fs_1.rmSync)("".concat(__dirname, "/tmp/").concat(name));
+                                    return [2 /*return*/];
+                            }
+                        });
+                    }); });
                     return [2 /*return*/];
             }
         });

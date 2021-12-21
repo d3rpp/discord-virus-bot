@@ -1,6 +1,12 @@
 // load up dotenv
 
-import { Client, Intents, Message, MessageFlags } from 'discord.js';
+import {
+	Client,
+	Intents,
+	Message,
+	MessageAttachment,
+	MessageFlags,
+} from 'discord.js';
 import { config } from 'dotenv';
 
 import uploadUrl from './utils/upload-url';
@@ -27,6 +33,21 @@ const SUS_TYPES = [
 	'application/gzip',
 	'application/x-msdos-program',
 	'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+	'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+];
+
+const SUS_EXTENSIONS = [
+	'.exe',
+	'.app',
+	'.jar',
+	'.bat',
+	'.vbs',
+	'.command',
+	'.cmd',
+	'.xlsx',
+	'.docx',
+	'.pptx',
+	'.ppsx',
 ];
 
 console.clear();
@@ -63,6 +84,7 @@ console.info('✅ Logged into Discord');
 
 client.on('ready', () => {
 	console.log(`✅ Logged into Discord as '${client.user?.tag}'`);
+	console.info('✅ Ready');
 });
 
 client.on('messageCreate', async (msg) => {
@@ -71,10 +93,15 @@ client.on('messageCreate', async (msg) => {
 
 	if (msg.attachments.size > 0) {
 		let is_sus = false;
-		msg.attachments.forEach((a) => {
+		msg.attachments.forEach((a: MessageAttachment) => {
 			if (SUS_TYPES.includes(a.contentType!)) {
 				is_sus = true;
 			}
+			SUS_EXTENSIONS.forEach((a) => {
+				if ((a.name || '').includes(a)) {
+					is_sus = true;
+				}
+			});
 		});
 
 		if (!is_sus) {
@@ -83,30 +110,53 @@ client.on('messageCreate', async (msg) => {
 		}
 
 		msg.attachments.forEach(async (a) => {
-			if (SUS_TYPES.includes(a.contentType!)) {
-				// a.setSpoiler();
-				msg.react('❔');
+			// a.setSpoiler();
+			msg.react('❔');
 
-				let id: string;
+			let id: string;
 
-				try {
-					id = await uploadUrl(a.url);
-				} catch (e) {
-					console.error('UNABLE TO UPLOAD URL');
+			try {
+				id = await uploadUrl(
+					a.url,
+					a.name || 'unnamed-file',
+					a.contentType || 'application/octet-stream',
+					msg
+				);
+			} catch (e) {
+				console.error('UNABLE TO UPLOAD URL');
+			}
+
+			try {
+				if (!id!) {
+					msg.reply('UNABLE TO GET VIRUS SCAN RESULTS');
+					return;
 				}
+				let status = await getStatus(id!, msg, a);
 
-				try {
-					if (!id!) {
-						msg.reply('UNABLE TO GET VIRUS SCAN RESULTS');
-						return;
-					}
-					await getStatus(id!, msg, a);
-				} catch (e) {
-					console.error('UNABLE TO GET STATUS');
-				}
+				msg.reply(`\
+=== **VIRUSTOTAL REPORT** ===
+**File Details**
+\t*Name*: \t${status.name}
+\t*Type*:\t${status.type}
+\t*URL*: \t${status.url}
+
+\t*SHA-256*: \t\`${status.sha256}\`
+\t*SHA-1*: \t\`${status.sha1}\`
+\t*MD5*: \t\`${status.md5}\`
+
+**Scan Results**
+\t✅\t ${status.results.harmless} scanners marked the file as **Harmless** or were unable to detect any malware.
+\t❔\t ${status.results.suspicious} scanners marked the file as **Suspicious**.
+\t❌\t ${status.results.malicious} scanners marked the file as **Malicious**.
+
+
+https://www.virustotal.com/gui/file/${status.md5}
+
+**Download this file at your own risk, Do not run arbitrary code on your computer unless you fully understand it**
+					`);
+			} catch (e) {
+				console.error('UNABLE TO GET STATUS');
 			}
 		});
 	}
 });
-
-console.info('✅ Ready');

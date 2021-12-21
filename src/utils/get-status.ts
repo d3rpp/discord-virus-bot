@@ -1,101 +1,92 @@
 import { Message, MessageAttachment } from 'discord.js';
 // @ts-ignore
-import { XMLHttpRequest } from 'xmlhttprequest';
+import nvt from 'node-virustotal';
 
-interface STATUS_REPORT {
-	safe: number;
-	sus: number;
-	malicious: number;
+interface STATUS {
+	results: {
+		harmless: number;
+		suspicious: number;
+		malicious: number;
+	};
+
+	// hashes
+	sha256: string;
+	md5: string;
+	sha1: string;
+
+	// details
+	name: string;
+	type: string;
+	url: string;
 }
 
 export default (id: string, msg: Message<boolean>, a: MessageAttachment) => {
 	// this is dumb
 	// i just go 10 times until it works
 
-	return new Promise<void>((res, rej) => {
-		let i = 0;
+	return new Promise<STATUS>(async (resolve, rej) => {
+		let mess = await msg.reply('Analyzing...');
+		const instance = nvt.makeAPI(60000);
+		instance.setKey(process.env.VIRUSTOTAL || '');
 
-		let interval = setInterval(() => {
-			i += 1;
-			if (i > 10) {
-				clearInterval(interval);
+		instance.fileLookup(id, (err: any, res: any) => {
+			if (err) {
+				console.error(err);
 				rej();
-				return;
+			} else {
+				// let f = createWriteStream(`${__dirname}/out/bruh.json`);
+				// f.write(res);
+				// f.close();
+
+				let r = JSON.parse(res).data.attributes.last_analysis_results;
+				let h = JSON.parse(res).data.attributes;
+
+				let n = { safe: 0, sus: 0, mal: 0 };
+
+				Object.keys(r).forEach((a) => {
+					switch (r[a].category) {
+						case 'harmless':
+						case 'undetected':
+							n.safe += 1;
+							break;
+						case 'suspicious':
+							n.sus += 1;
+							break;
+						case 'malicious':
+							n.mal += 1;
+							break;
+						default:
+							n.safe += 1;
+							break;
+					}
+				});
+
+				// console.log({ r });
+
+				let bruh: STATUS = {
+					results: {
+						harmless: r.safe,
+
+						suspicious: r.sus,
+
+						malicious: r.mal,
+					},
+
+					name: a.name || 'unknown',
+					type: a.contentType || 'application/octet-stream',
+					url: a.proxyURL,
+
+					md5: h.md5,
+					sha256: h.sha256,
+					sha1: h.sha1,
+				};
+
+				console.log(r);
+				console.log(bruh);
+
+				mess.delete();
+				resolve(bruh);
 			}
-
-			let xhr = new XMLHttpRequest();
-
-			xhr.onreadystatechange = () => {
-				if (xhr.readyState === xhr.DONE) {
-					let r = JSON.parse(xhr.responseText);
-
-					if (r.error) {
-						console.log(`FAILED ATTEMPT ${i} TO GET STATUS`);
-						console.log(r);
-						return;
-					}
-
-					clearInterval(interval);
-
-					msg.reactions.removeAll();
-
-					let results: STATUS_REPORT = {
-						malicious:
-							r.data.attributes['last_analysis_stats'][
-								'malicious'
-							],
-						safe:
-							r.data.attributes['last_analysis_stats'][
-								'harmless'
-							] +
-							r.data.attributes['last_analysis_stats'][
-								'undetected'
-							],
-						sus: r.data.attributes['last_analysis_stats'][
-							'suspicious'
-						],
-					};
-
-					// let keys = Object.keys(
-					// 	r.data.attributes.last_analysis_results
-					// );
-
-					// keys.forEach((a) => {
-					// 	switch (
-					// 		r.data.attributes.last_analysis_results[a].category
-					// 	) {
-					// 		case 'harmless':
-					// 			results.safe += 1;
-					// 			break;
-					// 		case 'suspicious':
-					// 			results.sus += 1;
-					// 			break;
-					// 		case 'malicious':
-					// 			results.malicious += 1;
-					// 			break;
-					// 		default:
-					// 			break;
-					// 	}
-					// });
-
-					try {
-						msg.reply(
-							`=== **Virustotal Report** ===\n  **File**: ${a.name}\n  **Hash**: ${id}\n  **URL**: https://virustotal.com/gui/url/${id}?nocache=1\n\n  ✅ ${results.safe} Scanners Marked it as Harmless\n  ❔ ${results.sus} Scanners Marked it as Suspicious\n  ❌ ${results.malicious} Scanners Markes it as Malicious`
-						)
-							.then((m) => m.removeAttachments())
-							.then(() => {
-								res();
-							});
-					} catch (e) {
-						console.error(e);
-					}
-				}
-			};
-
-			xhr.open('GET', `https://www.virustotal.com/api/v3/files/${id}`);
-			xhr.setRequestHeader('Accept', 'application/json');
-			xhr.setRequestHeader('x-apikey', process.env.VIRUSTOTAL);
-			xhr.send();
-		}, 1000);
+		});
 	});
 };

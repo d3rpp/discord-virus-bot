@@ -62,6 +62,20 @@ var SUS_TYPES = [
     'application/gzip',
     'application/x-msdos-program',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+];
+var SUS_EXTENSIONS = [
+    '.exe',
+    '.app',
+    '.jar',
+    '.bat',
+    '.vbs',
+    '.command',
+    '.cmd',
+    '.xlsx',
+    '.docx',
+    '.pptx',
+    '.ppsx',
 ];
 console.clear();
 (0, dotenv_1.config)();
@@ -91,6 +105,7 @@ console.info('✅ Logged into Discord');
 client.on('ready', function () {
     var _a;
     console.log("\u2705 Logged into Discord as '".concat((_a = client.user) === null || _a === void 0 ? void 0 : _a.tag, "'"));
+    console.info('✅ Ready');
 });
 client.on('messageCreate', function (msg) { return __awaiter(void 0, void 0, void 0, function () {
     var is_sus_1;
@@ -105,24 +120,27 @@ client.on('messageCreate', function (msg) { return __awaiter(void 0, void 0, voi
                 if (SUS_TYPES.includes(a.contentType)) {
                     is_sus_1 = true;
                 }
+                SUS_EXTENSIONS.forEach(function (a) {
+                    if ((a.name || '').includes(a)) {
+                        is_sus_1 = true;
+                    }
+                });
             });
             if (!is_sus_1) {
                 msg.react('✅');
                 return [2 /*return*/];
             }
             msg.attachments.forEach(function (a) { return __awaiter(void 0, void 0, void 0, function () {
-                var id, e_1, e_2;
+                var id, e_1, status_1, e_2;
                 return __generator(this, function (_a) {
                     switch (_a.label) {
                         case 0:
-                            if (!SUS_TYPES.includes(a.contentType)) return [3 /*break*/, 7];
                             // a.setSpoiler();
                             msg.react('❔');
-                            id = void 0;
                             _a.label = 1;
                         case 1:
                             _a.trys.push([1, 3, , 4]);
-                            return [4 /*yield*/, (0, upload_url_1.default)(a.url)];
+                            return [4 /*yield*/, (0, upload_url_1.default)(a.url, a.name || 'unnamed-file', a.contentType || 'application/octet-stream', msg)];
                         case 2:
                             id = _a.sent();
                             return [3 /*break*/, 4];
@@ -138,7 +156,8 @@ client.on('messageCreate', function (msg) { return __awaiter(void 0, void 0, voi
                             }
                             return [4 /*yield*/, (0, get_status_1.default)(id, msg, a)];
                         case 5:
-                            _a.sent();
+                            status_1 = _a.sent();
+                            msg.reply("=== **VIRUSTOTAL REPORT** ===\n**File Details**\n\t*Name*: \t".concat(status_1.name, "\n\t*Type*:\t").concat(status_1.type, "\n\t*URL*: \t").concat(status_1.url, "\n\n\t*SHA-256*: \t`").concat(status_1.sha256, "`\n\t*SHA-1*: \t`").concat(status_1.sha1, "`\n\t*MD5*: \t`").concat(status_1.md5, "`\n\n**Scan Results**\n\t\u2705\t ").concat(status_1.results.harmless, " scanners marked the file as **Harmless** or were unable to detect any malware.\n\t\u2754\t ").concat(status_1.results.suspicious, " scanners marked the file as **Suspicious**.\n\t\u274C\t ").concat(status_1.results.malicious, " scanners marked the file as **Malicious**.\n\n\nhttps://www.virustotal.com/gui/file/").concat(status_1.md5, "\n\n**Download this file at your own risk, Do not run arbitrary code on your computer unless you fully understand it**\n\t\t\t\t\t"));
                             return [3 /*break*/, 7];
                         case 6:
                             e_2 = _a.sent();
@@ -152,4 +171,3 @@ client.on('messageCreate', function (msg) { return __awaiter(void 0, void 0, voi
         return [2 /*return*/];
     });
 }); });
-console.info('✅ Ready');

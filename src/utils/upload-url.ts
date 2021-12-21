@@ -1,44 +1,39 @@
 // @ts-ignore
-import fetch from 'node-fetch';
-import FormData from 'form-data';
 import download from 'download';
+import { readFileSync, rmSync } from 'fs';
+import { Message } from 'discord.js';
+// @ts-ignore
+import nvt from 'node-virustotal';
 
-export default (url: string) => {
-	return new Promise<string>(async (res, rej) => {
-		const data = new FormData();
-		// TODO: formatting of name
-		data.append(
-			'file',
-			(
-				await download(url, {
-					headers: { Accept: '*/*' },
-					method: 'GET',
-				})
-			).toString('binary')
+export default (url: string, name: string, mime: string, message: Message) => {
+	return new Promise<string>(async (resolve, rej) => {
+		let mess = await message.reply(
+			"That's a sussy file type, imma check that"
 		);
 
-		const options = {
-			method: 'POST',
-			headers: {
-				Accept: 'application/json',
-				'x-apikey': process.env.VIRUSTOTAL,
-				'Content-Type':
-					'multipart/form-data; boundary=---011000010111000001101001',
-			},
-		};
+		await download(url, `${__dirname}/tmp`);
 
-		// @ts-ignore
-		options.body = data;
+		const instance = nvt.makeAPI();
+		instance.setKey(process.env.VIRUSTOTAL || '');
 
-		fetch('https://www.virustotal.com/api/v3/files', options)
-			.then((j) => j.json())
-			.then((re: any) => {
-				console.log(re);
-				if (re.error) {
+		instance.uploadFile(
+			readFileSync(`${__dirname}/tmp/${name}`),
+			name,
+			mime,
+			async (err: any, res: any) => {
+				if (err) {
+					console.error(err);
 					rej();
-					return;
 				}
-				res(re.data.id);
-			});
+
+				if (res) {
+					console.info(res);
+					resolve(atob(JSON.parse(res).data.id).split(':')[0]);
+				}
+
+				await mess.delete();
+				rmSync(`${__dirname}/tmp/${name}`);
+			}
+		);
 	});
 };
